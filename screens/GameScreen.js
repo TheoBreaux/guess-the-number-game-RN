@@ -1,10 +1,14 @@
-import { StyleSheet, View, Text, Alert } from "react-native";
-import PrimaryButton from "../UI/PrimaryButton";
-import Title from "../UI/Title";
-import { useState } from "react";
+import { StyleSheet, View, Alert, Text, FlatList } from "react-native";
+import PrimaryButton from "../components/UI/PrimaryButton";
+import Title from "../components/UI/Title";
+import { useState, useEffect } from "react";
 import NumberContainer from "../components/game/NumberContainer";
+import Card from "../components/UI/Card";
+import InstructionText from "../components/UI/InstructionText";
+import { Ionicons } from "@expo/vector-icons";
+import GuessLogItem from "../components/game/GuessLogItem";
 
-function generateRandomBetween(min, max, exclude) {
+const generateRandomBetween = (min, max, exclude) => {
   const rndNum = Math.floor(Math.random() * (max - min)) + min;
 
   if (rndNum === exclude) {
@@ -12,18 +16,26 @@ function generateRandomBetween(min, max, exclude) {
   } else {
     return rndNum;
   }
-}
+};
 
 let minBoundary = 1;
 let maxBoundary = 100;
 
-const GameScreen = ({ userNumber }) => {
-  const initialGuess = generateRandomBetween(
-    minBoundary,
-    maxBoundary,
-    userNumber
-  );
+const GameScreen = ({ userNumber, gameOverHandler }) => {
+  const initialGuess = generateRandomBetween(1, 100, userNumber);
   const [currentGuess, setCurrentGuess] = useState(initialGuess);
+  const [guessRounds, setGuessRounds] = useState([initialGuess]);
+
+  useEffect(() => {
+    if (currentGuess === userNumber) {
+      gameOverHandler(guessRounds.length);
+    }
+  }, [currentGuess, userNumber, gameOverHandler]);
+
+  useEffect(() => {
+    minBoundary = 1;
+    maxBoundary = 100;
+  }, []);
 
   const nextGuessHandler = (direction) => {
     if (
@@ -46,25 +58,48 @@ const GameScreen = ({ userNumber }) => {
       currentGuess
     );
     setCurrentGuess(newRndNumber);
+    setGuessRounds((prevGuess) => [newRndNumber, ...prevGuess]);
   };
+
+  const guessRoundsListLength = guessRounds.length;
 
   return (
     <View style={styles.screen}>
       <Title>Opponent's Guess</Title>
       <NumberContainer>{currentGuess}</NumberContainer>
-      <View>
-        <Text>Higher or lower?</Text>
-      </View>
-      <View style={styles.buttonContainer}>
-        <PrimaryButton onPress={nextGuessHandler.bind(this, "lower")}>
-          -
-        </PrimaryButton>
-        <PrimaryButton onPress={nextGuessHandler.bind(this, "greater")}>
-          +
-        </PrimaryButton>
-      </View>
+      <Card>
+        <InstructionText style={styles.instructionText}>
+          Higher or lower?
+        </InstructionText>
+        <View style={styles.buttonsContainer}>
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={nextGuessHandler.bind(this, "lower")}>
+              <Ionicons name="md-remove" size={24} color={"white"} />
+            </PrimaryButton>
+          </View>
+          <View style={styles.buttonContainer}>
+            <PrimaryButton onPress={nextGuessHandler.bind(this, "greater")}>
+              <Ionicons name="md-add" size={24} color={"white"} />
+            </PrimaryButton>
+          </View>
+        </View>
+      </Card>
 
-      {/* <View>LOG ROUNDS</View> */}
+      <View style={styles.listContainer}>
+        {/* {guessRounds.map((guessRound) => (
+          <Text key={guessRound}>{guessRound}</Text>
+        ))} */}
+        <FlatList
+          data={guessRounds}
+          renderItem={(itemData) => (
+            <GuessLogItem
+              roundNumber={guessRoundsListLength - itemData.index}
+              guess={itemData.item}
+            />
+          )}
+          keyExtractor={(item) => item}
+        />
+      </View>
     </View>
   );
 };
@@ -74,8 +109,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
+  instructionText: {
+    marginBottom: 15,
+  },
+  buttonsContainer: {
+    flexDirection: "row",
+  },
   buttonContainer: {
-    // flexDirection: "row",
+    flex: 1,
+  },
+  listContainer: {
+    flex: 1,
+    padding: 16,
   },
 });
 
