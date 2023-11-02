@@ -3,7 +3,7 @@
     "name": "number-guessing-game-React-Native",
     "slug": "number-guessing-game-React-Native",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": ["**/*"],
     "ios": {
